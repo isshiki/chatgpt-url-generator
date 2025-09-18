@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>ChatGPT URL Generator</title>
+<style>
+  :root{
+    --bg: #0b1220;          /* 背景 */
+    --card: rgba(255,255,255,.06);
+    --border: rgba(255,255,255,.15);
+    --text: #e6ebf5;
+    --muted: #a8b3cf;
+    --primary: #6ea8ff;
+    --primary-2: #3d8bfd;
+    --shadow: 0 10px 30px rgba(0,0,0,.35);
+    --radius: 16px;
+  }
+  @media (prefers-color-scheme: light){
+    :root{
+      --bg: #f5f7fb;
+      --card: rgba(255,255,255,.8);
+      --border: rgba(0,0,0,.08);
+      --text: #111827;
+      --muted: #475569;
+      --primary: #2563eb;
+      --primary-2: #1d4ed8;
+      --shadow: 0 10px 30px rgba(0,0,0,.08);
+    }
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0; font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans JP", "Hiragino Kaku Gothic ProN", Meiryo, "Apple Color Emoji", "Segoe UI Emoji";
+    color:var(--text); background: radial-gradient(1200px 800px at 20% -10%, #1a2b5f66, transparent 60%),
+                         radial-gradient(1200px 800px at 120% 10%, #0ea5e94d, transparent 55%),
+                         var(--bg);
+    display:grid; place-items:center; padding:24px;
+  }
+  .wrap{width:min(880px, 100%);}
+
+  .title{
+    font-size: clamp(20px, 2.4vw, 28px); margin: 0 0 16px;
+    letter-spacing:.2px;
+  }
+  .card{
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    backdrop-filter: blur(16px);
+    padding: 20px;
+  }
+  .label{font-size:14px; color:var(--muted); margin-bottom:8px}
+  textarea{
+    width:100%; height:160px; resize: vertical;
+    background: transparent; color: var(--text);
+    border: 1px solid var(--border); border-radius: 12px;
+    padding: 14px 16px; line-height:1.6; font-size:15px;
+    outline: none;
+  }
+  textarea:focus{border-color: var(--primary); box-shadow: 0 0 0 4px color-mix(in oklab, var(--primary) 25%, transparent)}
+  .row{display:flex; gap:12px; flex-wrap:wrap; align-items:center; margin-top:12px}
+  .btn{
+    appearance:none; border:1px solid var(--border);
+    padding: 10px 14px; border-radius: 12px; cursor:pointer;
+    background:#ffffff0d; color:var(--text); font-weight:600; font-size:14px;
+    transition: transform .04s ease, background .15s ease, border-color .15s ease;
+  }
+  .btn:hover{transform: translateY(-1px)}
+  .btn:active{transform: translateY(0)}
+  .btn.primary{background: linear-gradient(180deg, var(--primary), var(--primary-2)); border-color: transparent; color:#fff}
+  .btn.ghost:hover{background:#ffffff1a}
+  .btn:disabled{opacity:.5; cursor:not-allowed}
+  .hint{font-size:12px; color:var(--muted); margin-top:6px}
+  .out{
+    margin-top:16px; padding:14px;
+    border:1px dashed var(--border); border-radius:12px; background:#ffffff07;
+  }
+  .url{
+    display:block; word-break: break-all; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+    text-decoration:none; color: var(--primary); font-size:14px;
+  }
+  .stats{display:flex; gap:16px; flex-wrap:wrap; margin-top:8px; color:var(--muted); font-size:12px}
+  .pill{border:1px solid var(--border); border-radius:999px; padding:4px 10px; background:#ffffff0a}
+  footer{margin-top:12px; font-size:12px; color:var(--muted)}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <h1 class="title">ChatGPT URL Generator</h1>
+    <div class="card">
+      <div class="label">プロンプト（Enterで改行／Shift+Enterで生成）</div>
+      <textarea id="input" placeholder="例）こんにちは。次の条件でブログの導入文を3案ください：…"></textarea>
+
+      <div class="row">
+        <button class="btn primary" id="genBtn" aria-label="URLを生成する">生成する</button>
+        <button class="btn ghost" id="openBtn" aria-label="新しいタブで開く" disabled>新しいタブで開く</button>
+        <button class="btn ghost" id="copyBtn" aria-label="URLをコピー" disabled>URLをコピー</button>
+        <span class="hint">RFC 3986 準拠エンコードで <code>?prompt=</code> に埋め込みます</span>
+      </div>
+
+      <div class="out" id="outBox" hidden>
+        <a id="result" class="url" target="_blank" rel="noopener noreferrer"></a>
+        <div class="stats">
+          <span class="pill" id="encLen">encoded: 0 chars</span>
+          <span class="pill" id="rawLen">raw: 0 chars</span>
+        </div>
+      </div>
+
+      <footer>ヒント: 長文でもOK。改行は自動で <code>%0A</code> として安全にエンコードされます。</footer>
+    </div>
+  </div>
+
+<script>
+  // RFC 3986 準拠: unreserved [-._~A-Za-z0-9] を除き %HH。'!' '()' '*' "'" も大文字HEXで。
+  function rfc3986Encode(str){
+    return encodeURIComponent(str).replace(/[!'()*]/g, c =>
+      '%' + c.charCodeAt(0).toString(16).toUpperCase()
+    );
+  }
+
+  const base = "https://chatgpt.com/?prompt=";
+  const input = document.getElementById('input');
+  const genBtn = document.getElementById('genBtn');
+  const openBtn = document.getElementById('openBtn');
+  const copyBtn = document.getElementById('copyBtn');
+  const resultLink = document.getElementById('result');
+  const outBox = document.getElementById('outBox');
+  const encLen = document.getElementById('encLen');
+  const rawLen = document.getElementById('rawLen');
+
+  function generate(){
+    const text = input.value ?? "";
+    const url = base + rfc3986Encode(text);
+    resultLink.href = url;
+    resultLink.textContent = url;
+    outBox.hidden = false;
+    openBtn.disabled = false;
+    copyBtn.disabled = false;
+    encLen.textContent = `encoded: ${url.length} chars`;
+    rawLen.textContent = `raw: ${text.length} chars`;
+  }
+
+  // キー操作: Enter=改行、Shift+Enterで生成（Ctrl+Enterも受け付け）
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && (e.shiftKey || e.ctrlKey)) {
+      e.preventDefault();
+      generate();
+    }
+  });
+
+  genBtn.addEventListener('click', generate);
+
+  openBtn.addEventListener('click', () => {
+    if (resultLink.href) window.open(resultLink.href, '_blank', 'noopener');
+  });
+
+  copyBtn.addEventListener('click', async () => {
+    const url = resultLink.href;
+    if (!url) return;
+    try{
+      await navigator.clipboard.writeText(url);
+      copyBtn.textContent = 'コピーしました';
+      setTimeout(()=> copyBtn.textContent = 'URLをコピー', 1200);
+    }catch{
+      // クリップボード不可の場合は選択→手動コピー
+      const sel = window.getSelection();
+      const range = document.createRange();
+      range.selectNodeContents(resultLink);
+      sel.removeAllRanges(); sel.addRange(range);
+    }
+  });
+</script>
+</body>
+</html>
