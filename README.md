@@ -3,6 +3,8 @@
 入力した文章を **RFC 3986 準拠** でエンコードし、ChatGPT 用のリンクに変換する Web アプリです。  
 GitHub Pages 上にデプロイすれば、そのままブラウザから利用できます。
 
+👉 **デモはこちら**: [https://isshiki.github.io/chatgpt-url-generator/](https://isshiki.github.io/chatgpt-url-generator/)
+
 ---
 
 ## 特徴
