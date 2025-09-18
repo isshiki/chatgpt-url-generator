@@ -36,7 +36,8 @@ GitHub Pages 上にデプロイすれば、そのままブラウザから利用�
 
 ## サンプル画面
 
-（スクリーンショットがあればここに追加すると親切です）
+![ChatGPT URL Generator screenshot](screenshot.pnt.png)
+
 
 ---
 
