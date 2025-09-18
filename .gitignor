@@ -1,0 +1,7 @@
+# OS / Editor junk
+.DS_Store
+Thumbs.db
+
+# Node.js (もし将来追加するなら)
+node_modules/
+dist/
