@@ -109,7 +109,7 @@
     display:block; word-break: break-all; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
     text-decoration:none; color: var(--primary); font-size:14px;
   }
-  .stats{display:flex; gap:16px; flex-wrap:wrap; margin-top:8px; color:var(--muted); font-size:12px}
+  .stats{display:flex; gap:16px; flex-wrap:wrap; margin-top:16px; color:var(--muted); font-size:12px}
   .pill{border:1px solid var(--border); border-radius:999px; padding:4px 10px; background:#ffffff0a}
   footer{margin-top:12px; font-size:12px; color:var(--muted)}
 </style>
@@ -123,15 +123,15 @@
 
       <div class="controls">
         <button class="btn primary" id="genBtn" aria-label="URLを生成する">生成する</button>
-        <span class="hint">入力されたプロンプトを、RFC 3986 準拠でエンコードして、URLのクエリパラメーターに埋め込みます</span>
+        <span class="hint">入力されたプロンプトを RFC 3986 準拠でエンコードして、URLのクエリパラメーターに埋め込みます</span>
       </div>
 
       <div class="out" id="outBox" hidden>
         <p class="out-caption">各サービスで利用できるリンク</p>
         <div class="services" id="services"></div>
         <div class="stats" id="summaryStats" hidden>
-          <span class="pill" id="summaryEncoded">encoded: 0 chars</span>
           <span class="pill" id="summaryRaw">raw: 0 chars</span>
+          <span class="pill" id="summaryEncoded">encoded: 0 chars</span>
         </div>
       </div>
 
@@ -149,7 +149,7 @@
 
   const services = [
     { id: 'chatgpt', name: 'OpenAI ChatGPT', base: 'https://chatgpt.com/?prompt=' },
-    { id: 'claude', name: 'Claude', base: 'https://claude.ai/new?q=' },
+    { id: 'claude', name: 'Anthropic Claude', base: 'https://claude.ai/new?q=' },
     { id: 'perplexity', name: 'Perplexity', base: 'https://www.perplexity.ai/search?q=' },
     {
       id: 'gemini',
