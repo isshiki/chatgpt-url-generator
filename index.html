@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>ChatGPT URL Generator</title>
+<title>PromptLinker</title>
 <style>
   :root{
     --bg: #0b1220;          /* 背景 */
@@ -60,7 +60,8 @@
     outline: none;
   }
   textarea:focus{border-color: var(--primary); box-shadow: 0 0 0 4px color-mix(in oklab, var(--primary) 25%, transparent)}
-  .row{display:flex; gap:12px; flex-wrap:wrap; align-items:center; margin-top:12px}
+  .controls{display:flex; gap:12px; flex-wrap:wrap; align-items:center; margin-top:12px}
+  .controls .hint{flex:1 0 100%; margin-top:4px}
   .btn{
     appearance:none; border:1px solid var(--border);
     padding: 10px 14px; border-radius: 12px; cursor:pointer;
@@ -77,6 +78,33 @@
     margin-top:16px; padding:14px;
     border:1px dashed var(--border); border-radius:12px; background:#ffffff07;
   }
+  .out-caption{font-size:13px; color:var(--muted); margin:0 0 12px}
+  .services{display:grid; gap:16px}
+  @media (min-width: 680px){
+    .services{grid-template-columns:repeat(auto-fit, minmax(260px, 1fr))}
+  }
+  .service{
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding:16px;
+    background:#ffffff0a;
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+  }
+  .service-title{
+    margin:0;
+    font-size:16px;
+  }
+  .actions{display:flex; gap:8px; flex-wrap:wrap}
+  .actions .btn{flex:1 1 160px}
+  .service-unavailable{opacity:.75}
+  .note{
+    margin:4px 0 0;
+    font-size:13px;
+    color:var(--muted);
+    line-height:1.6;
+  }
   .url{
     display:block; word-break: break-all; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
     text-decoration:none; color: var(--primary); font-size:14px;
@@ -88,24 +116,19 @@
 </head>
 <body>
   <div class="wrap">
-    <h1 class="title">ChatGPT URL Generator</h1>
+    <h1 class="title">PromptLinker</h1>
     <div class="card">
       <div class="label">プロンプト（Enterで改行／Shift+Enterで生成）</div>
       <textarea id="input" placeholder="例）こんにちは。次の条件でブログの導入文を3案ください：…"></textarea>
 
-      <div class="row">
+      <div class="controls">
         <button class="btn primary" id="genBtn" aria-label="URLを生成する">生成する</button>
-        <button class="btn ghost" id="openBtn" aria-label="新しいタブで開く" disabled>新しいタブで開く</button>
-        <button class="btn ghost" id="copyBtn" aria-label="URLをコピー" disabled>URLをコピー</button>
         <span class="hint">RFC 3986 準拠エンコードで <code>?prompt=</code> に埋め込みます</span>
       </div>
 
       <div class="out" id="outBox" hidden>
-        <a id="result" class="url" target="_blank" rel="noopener noreferrer"></a>
-        <div class="stats">
-          <span class="pill" id="encLen">encoded: 0 chars</span>
-          <span class="pill" id="rawLen">raw: 0 chars</span>
-        </div>
+        <p class="out-caption">各サービスで利用できるリンク</p>
+        <div class="services" id="services"></div>
       </div>
 
       <footer>ヒント: 長文でもOK。改行は自動で <code>%0A</code> として安全にエンコードされます。</footer>
@@ -120,26 +143,149 @@
     );
   }
 
-  const base = "https://chatgpt.com/?prompt=";
+  const services = [
+    { id: 'chatgpt', name: 'OpenAI ChatGPT', base: 'https://chatgpt.com/?prompt=' },
+    { id: 'claude', name: 'Claude', base: 'https://claude.ai/new?prompt=' },
+    { id: 'perplexity', name: 'Perplexity', base: 'https://www.perplexity.ai/search?q=' },
+    {
+      id: 'gemini',
+      name: 'Google Gemini',
+      available: false,
+      note: '現在、リンクでプロンプトを入力する仕組みがないため、未対応です。プロンプトは専用の HTTP ヘッダー（<code>x-omnibox-gemini</code>）経由で送信する必要があります。'
+    }
+  ];
+
   const input = document.getElementById('input');
   const genBtn = document.getElementById('genBtn');
-  const openBtn = document.getElementById('openBtn');
-  const copyBtn = document.getElementById('copyBtn');
-  const resultLink = document.getElementById('result');
   const outBox = document.getElementById('outBox');
-  const encLen = document.getElementById('encLen');
-  const rawLen = document.getElementById('rawLen');
+  const servicesContainer = document.getElementById('services');
+
+  const serviceViews = services.map((service) => {
+    const section = document.createElement('section');
+    section.className = 'service';
+    section.dataset.service = service.id;
+    if (service.available === false) {
+      section.classList.add('service-unavailable');
+    }
+
+    const title = document.createElement('h2');
+    title.className = 'service-title';
+    title.textContent = service.name;
+    section.appendChild(title);
+
+    const view = { service, available: service.available !== false };
+
+    if (view.available) {
+      const urlEl = document.createElement('a');
+      urlEl.className = 'url';
+      urlEl.target = '_blank';
+      urlEl.rel = 'noopener noreferrer';
+      section.appendChild(urlEl);
+
+      const actions = document.createElement('div');
+      actions.className = 'actions';
+
+      const openBtn = document.createElement('button');
+      openBtn.type = 'button';
+      openBtn.className = 'btn ghost';
+      openBtn.textContent = '新しいタブで開く';
+      openBtn.setAttribute('aria-label', `${service.name} を新しいタブで開く`);
+      openBtn.disabled = true;
+      actions.appendChild(openBtn);
+
+      const copyBtn = document.createElement('button');
+      copyBtn.type = 'button';
+      copyBtn.className = 'btn ghost';
+      copyBtn.textContent = 'URLをコピー';
+      copyBtn.setAttribute('aria-label', `${service.name} のURLをコピー`);
+      copyBtn.dataset.defaultLabel = 'URLをコピー';
+      copyBtn.dataset.doneLabel = 'コピーしました';
+      copyBtn.disabled = true;
+      actions.appendChild(copyBtn);
+
+      section.appendChild(actions);
+
+      const stats = document.createElement('div');
+      stats.className = 'stats';
+
+      const encSpan = document.createElement('span');
+      encSpan.className = 'pill';
+      encSpan.textContent = 'encoded: 0 chars';
+
+      const rawSpan = document.createElement('span');
+      rawSpan.className = 'pill';
+      rawSpan.textContent = 'raw: 0 chars';
+
+      stats.appendChild(encSpan);
+      stats.appendChild(rawSpan);
+      section.appendChild(stats);
+
+      openBtn.addEventListener('click', () => {
+        if (urlEl.href) window.open(urlEl.href, '_blank', 'noopener');
+      });
+
+      let copyTimer = null;
+      copyBtn.addEventListener('click', async () => {
+        const url = urlEl.href;
+        if (!url) return;
+        try{
+          await navigator.clipboard.writeText(url);
+          copyBtn.textContent = copyBtn.dataset.doneLabel;
+          if (copyTimer) clearTimeout(copyTimer);
+          copyTimer = setTimeout(() => {
+            copyBtn.textContent = copyBtn.dataset.defaultLabel;
+            copyTimer = null;
+          }, 1200);
+        }catch{
+          // クリップボード不可の場合は選択→手動コピー
+          const sel = window.getSelection();
+          const range = document.createRange();
+          range.selectNodeContents(urlEl);
+          sel.removeAllRanges();
+          sel.addRange(range);
+        }
+      });
+
+      view.urlEl = urlEl;
+      view.openBtn = openBtn;
+      view.copyBtn = copyBtn;
+      view.encSpan = encSpan;
+      view.rawSpan = rawSpan;
+      view.resetCopyLabel = () => {
+        copyBtn.textContent = copyBtn.dataset.defaultLabel;
+        if (copyTimer) {
+          clearTimeout(copyTimer);
+          copyTimer = null;
+        }
+      };
+    } else {
+      const note = document.createElement('p');
+      note.className = 'note';
+      note.innerHTML = service.note || '現在、リンクでプロンプトを入力する仕組みがないため、未対応です。';
+      section.appendChild(note);
+    }
+
+    servicesContainer.appendChild(section);
+    return view;
+  });
 
   function generate(){
     const text = input.value ?? "";
-    const url = base + rfc3986Encode(text);
-    resultLink.href = url;
-    resultLink.textContent = url;
+    const encoded = rfc3986Encode(text);
+
+    serviceViews.forEach((view) => {
+      if (!view.available) return;
+      const url = view.service.base + encoded;
+      view.urlEl.href = url;
+      view.urlEl.textContent = url;
+      view.openBtn.disabled = false;
+      view.copyBtn.disabled = false;
+      view.resetCopyLabel();
+      view.encSpan.textContent = `encoded: ${url.length} chars`;
+      view.rawSpan.textContent = `raw: ${text.length} chars`;
+    });
+
     outBox.hidden = false;
-    openBtn.disabled = false;
-    copyBtn.disabled = false;
-    encLen.textContent = `encoded: ${url.length} chars`;
-    rawLen.textContent = `raw: ${text.length} chars`;
   }
 
   // キー操作: Enter=改行、Shift+Enterで生成（Ctrl+Enterも受け付け）
@@ -151,26 +297,6 @@
   });
 
   genBtn.addEventListener('click', generate);
-
-  openBtn.addEventListener('click', () => {
-    if (resultLink.href) window.open(resultLink.href, '_blank', 'noopener');
-  });
-
-  copyBtn.addEventListener('click', async () => {
-    const url = resultLink.href;
-    if (!url) return;
-    try{
-      await navigator.clipboard.writeText(url);
-      copyBtn.textContent = 'コピーしました';
-      setTimeout(()=> copyBtn.textContent = 'URLをコピー', 1200);
-    }catch{
-      // クリップボード不可の場合は選択→手動コピー
-      const sel = window.getSelection();
-      const range = document.createRange();
-      range.selectNodeContents(resultLink);
-      sel.removeAllRanges(); sel.addRange(range);
-    }
-  });
 </script>
 </body>
 </html>
