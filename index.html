@@ -129,6 +129,10 @@
       <div class="out" id="outBox" hidden>
         <p class="out-caption">各サービスで利用できるリンク</p>
         <div class="services" id="services"></div>
+        <div class="stats" id="summaryStats" hidden>
+          <span class="pill" id="summaryEncoded">encoded: 0 chars</span>
+          <span class="pill" id="summaryRaw">raw: 0 chars</span>
+        </div>
       </div>
 
       <footer>ヒント: ある程度の長文でもOK。改行は自動で <code>%0A</code> として安全にエンコードされます。</footer>
@@ -159,6 +163,9 @@
   const genBtn = document.getElementById('genBtn');
   const outBox = document.getElementById('outBox');
   const servicesContainer = document.getElementById('services');
+  const summaryStats = document.getElementById('summaryStats');
+  const summaryEncoded = document.getElementById('summaryEncoded');
+  const summaryRaw = document.getElementById('summaryRaw');
 
   const serviceViews = services.map((service) => {
     const section = document.createElement('section');
@@ -205,21 +212,6 @@
 
       section.appendChild(actions);
 
-      const stats = document.createElement('div');
-      stats.className = 'stats';
-
-      const encSpan = document.createElement('span');
-      encSpan.className = 'pill';
-      encSpan.textContent = 'encoded: 0 chars';
-
-      const rawSpan = document.createElement('span');
-      rawSpan.className = 'pill';
-      rawSpan.textContent = 'raw: 0 chars';
-
-      stats.appendChild(encSpan);
-      stats.appendChild(rawSpan);
-      section.appendChild(stats);
-
       openBtn.addEventListener('click', () => {
         if (urlEl.href) window.open(urlEl.href, '_blank', 'noopener');
       });
@@ -249,8 +241,6 @@
       view.urlEl = urlEl;
       view.openBtn = openBtn;
       view.copyBtn = copyBtn;
-      view.encSpan = encSpan;
-      view.rawSpan = rawSpan;
       view.resetCopyLabel = () => {
         copyBtn.textContent = copyBtn.dataset.defaultLabel;
         if (copyTimer) {
@@ -281,9 +271,11 @@
       view.openBtn.disabled = false;
       view.copyBtn.disabled = false;
       view.resetCopyLabel();
-      view.encSpan.textContent = `encoded: ${encoded.length} chars`;
-      view.rawSpan.textContent = `raw: ${text.length} chars`;
     });
+
+    summaryStats.hidden = false;
+    summaryEncoded.textContent = `encoded: ${encoded.length} chars`;
+    summaryRaw.textContent = `raw: ${text.length} chars`;
 
     outBox.hidden = false;
   }
