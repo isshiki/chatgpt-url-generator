@@ -5,7 +5,7 @@ PromptLinker は、入力した文章を **RFC 3986 準拠** でエンコード�
 
 index.htmlファイルをWebサーバー上にデプロイすれば、そのままブラウザから利用できます。
 
-👉 **デモはこちら**: [https://isshiki.github.io/chatgpt-url-generator/](https://isshiki.github.io/chatgpt-url-generator/)
+👉 **デモはこちら**: [https://isshiki.github.io/PromptLinker/](https://isshiki.github.io/PromptLinker/)
 
 ---
 
