@@ -1,7 +1,9 @@
 # PromptLinker
 
-PromptLinker は、入力した文章を **RFC 3986 準拠** でエンコードし、OpenAI ChatGPT / Claude / Perplexity 向けのリンクを同時に生成する Web アプリです。
-Google Gemini については、リンク経由でプロンプトを渡せないため、対応していません。GitHub Pages 上にデプロイすれば、そのままブラウザから利用できます。
+PromptLinker は、入力した文章を **RFC 3986 準拠** でエンコードし、OpenAI ChatGPT / Anthropic Claude / Perplexity 向けのリンクを同時に生成する Web アプリです。
+なお、Google Gemini については、リンク経由でプロンプトを渡せないため、対応していません。
+
+index.htmlファイルをWebサーバー上にデプロイすれば、そのままブラウザから利用できます。
 
 👉 **デモはこちら**: [https://isshiki.github.io/chatgpt-url-generator/](https://isshiki.github.io/chatgpt-url-generator/)
 
@@ -9,12 +11,11 @@ Google Gemini については、リンク経由でプロンプトを渡せない
 
 ## 特徴
 
-- OpenAI ChatGPT / Claude / Perplexity 向けのリンクを同時生成
+- ChatGPT / Claude / Perplexity 向けのリンクを同時生成
 - 各サービスごとに **新しいタブで開く / URL をコピー** できる操作ボタンを用意
 - RFC 3986 準拠のエンコード（`A-Z a-z 0-9 - . _ ~` のみ非エンコード）
 - 改行対応（`%0A` として安全にエンコード）
 - Enter で改行、**Shift+Enter** で生成（Ctrl+Enter も利用可）
-- 生成された URL を **クリック / 新規タブで開く / コピー** 可能
 - 完全クライアントサイド、サーバ不要
 
 ---
@@ -36,7 +37,7 @@ Gemini では、リンクのクエリパラメーターでプロンプトを渡�
 
 ---
 
-## デプロイ方法（GitHub Pages）
+## デプロイ方法（GitHub Pagesの場合）
 
 1. 本リポジトリを fork または clone  
 2. `index.html` をリポジトリ直下に配置（すでに含まれています）
