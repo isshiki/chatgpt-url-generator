@@ -123,7 +123,7 @@
 
       <div class="controls">
         <button class="btn primary" id="genBtn" aria-label="URLを生成する">生成する</button>
-        <span class="hint">RFC 3986 準拠エンコードで <code>?prompt=</code> に埋め込みます</span>
+        <span class="hint">入力されたプロンプトを、RFC 3986 準拠でエンコードして、URLのクエリパラメーターに埋め込みます</span>
       </div>
 
       <div class="out" id="outBox" hidden>
@@ -131,7 +131,7 @@
         <div class="services" id="services"></div>
       </div>
 
-      <footer>ヒント: 長文でもOK。改行は自動で <code>%0A</code> として安全にエンコードされます。</footer>
+      <footer>ヒント: ある程度の長文でもOK。改行は自動で <code>%0A</code> として安全にエンコードされます。</footer>
     </div>
   </div>
 
@@ -145,7 +145,7 @@
 
   const services = [
     { id: 'chatgpt', name: 'OpenAI ChatGPT', base: 'https://chatgpt.com/?prompt=' },
-    { id: 'claude', name: 'Claude', base: 'https://claude.ai/new?prompt=' },
+    { id: 'claude', name: 'Claude', base: 'https://claude.ai/new?q=' },
     { id: 'perplexity', name: 'Perplexity', base: 'https://www.perplexity.ai/search?q=' },
     {
       id: 'gemini',
@@ -281,7 +281,7 @@
       view.openBtn.disabled = false;
       view.copyBtn.disabled = false;
       view.resetCopyLabel();
-      view.encSpan.textContent = `encoded: ${url.length} chars`;
+      view.encSpan.textContent = `encoded: ${encoded.length} chars`;
       view.rawSpan.textContent = `raw: ${text.length} chars`;
     });
 
